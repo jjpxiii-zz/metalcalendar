@@ -110,18 +110,19 @@ async function insertEvents(auth) {
     var client = request.createClient('http://sueurdemetal.com')
     var data = { region: 12 }
     var calendar = google.calendar('v3');
-    client.post('/func/funcGetEventRegion.php', data, function (err, res, body) {
+    client.post('/func/funcGetEventRegion.php', data, async function (err, res, body) {
         res = body.results.collection1
 
         for (let i = 0; i < res.length; i++) {
             // console.log(new Date(res[i].datetimestamp * 1000))
             // console.log(res[i].ville)
             // res[i].groupes.map(g => console.log(g.NomGroupe))
-            sleep(500);
+            var details = res[i].groupes.map(g => g.NomGroupe).join(' + ')
+            await sleep(500);
             calendar.events.get({
                 auth: auth,
                 calendarId: 'mbc5o4dl4p8uvt8rgl6v9u3ld0@group.calendar.google.com',
-                eventId: sha1(res[i].groupes[0].NomGroupe + res[i].datetimestamp).toLowerCase(),
+                eventId: sha1(res[i].groupes.map(g => g.NomGroupe).join(' + ') + res[i].ville + ' ' + res[i].datetimestamp).toLowerCase(),
             }, function (err, response) {
                 if (err) {
                     //     console.log('The API returned an error: ' + err);
@@ -129,8 +130,9 @@ async function insertEvents(auth) {
                     // }
                     // var events = response.items;
                     // if (events.length == 0) {
+                    sleep(500);
                     var event = {
-                        'summary': res[i].groupes[0].NomGroupe,
+                        'summary': res[i].groupes.map(g => g.NomGroupe).join(' + '),
                         'location': res[i].ville,
                         'description': res[i].groupes.map(g => g.NomGroupe).join(' + '),
                         'start': {
@@ -150,7 +152,7 @@ async function insertEvents(auth) {
                             'overrides': [
                             ],
                         },
-                        'id': sha1(res[i].groupes[0].NomGroupe + res[i].datetimestamp).toLowerCase(),
+                        'id': sha1(res[i].groupes.map(g => g.NomGroupe).join(' + ') + res[i].ville + ' ' + res[i].datetimestamp).toLowerCase(),
                     };
 
                     calendar.events.insert({
