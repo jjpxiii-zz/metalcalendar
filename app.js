@@ -79,7 +79,7 @@ function getNewToken(oauth2Client, callback) {
         });
     });
 }
-
+  
 /**
  * Store token to disk be used in later program executions.
  *
