@@ -114,32 +114,15 @@ async function insertEvents(auth) {
         res = body.results.collection1
 
         for (let i = 0; i < res.length; i++) {
-<<<<<<< HEAD
             var details = res[i].groupes.map(g => g.NomGroupe).join(' + ')
             await sleep(200);
-=======
-            // console.log(new Date(res[i].datetimestamp * 1000))
-            // console.log(res[i].ville)
-            // res[i].groupes.map(g => console.log(g.NomGroupe))
-            var details = res[i].groupes.map(g => g.NomGroupe).join(' + ')
-            await sleep(500);
->>>>>>> 88a6435d5dc65493f633548ce36b41b582f3e7c2
             calendar.events.get({
                 auth: auth,
                 calendarId: 'mbc5o4dl4p8uvt8rgl6v9u3ld0@group.calendar.google.com',
                 eventId: sha1(res[i].groupes.map(g => g.NomGroupe).join(' + ') + res[i].ville + ' ' + res[i].datetimestamp).toLowerCase(),
             }, function (err, response) {
                 if (err) {
-<<<<<<< HEAD
                     sleep(200);
-=======
-                    //     console.log('The API returned an error: ' + err);
-                    //     return;
-                    // }
-                    // var events = response.items;
-                    // if (events.length == 0) {
-                    sleep(500);
->>>>>>> 88a6435d5dc65493f633548ce36b41b582f3e7c2
                     var event = {
                         'summary': res[i].groupes.map(g => g.NomGroupe).join(' + '),
                         'location': res[i].ville,
