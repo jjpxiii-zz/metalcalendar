@@ -21,6 +21,7 @@ fs.readFile('client_secret.json', function processClientSecrets(err, content) {
     // Authorize a client with the loaded credentials, then call the
     // Google Calendar API.
     authorize(JSON.parse(content), insertEvents);
+    authorize(JSON.parse(content), updateEventsLocation);
 });
 
 /**
@@ -79,7 +80,7 @@ function getNewToken(oauth2Client, callback) {
         });
     });
 }
-  
+
 /**
  * Store token to disk be used in later program executions.
  *
@@ -112,52 +113,55 @@ async function insertEvents(auth) {
     var calendar = google.calendar('v3');
     client.post('/func/funcGetEventRegion.php', data, async function (err, res, body) {
         res = body.results.collection1
-
         for (let i = 0; i < res.length; i++) {
             var details = res[i].groupes.map(g => g.NomGroupe).join(' + ')
             await sleep(200);
+
             calendar.events.get({
                 auth: auth,
                 calendarId: 'mbc5o4dl4p8uvt8rgl6v9u3ld0@group.calendar.google.com',
                 eventId: sha1(res[i].groupes.map(g => g.NomGroupe).join(' + ') + res[i].ville + ' ' + res[i].datetimestamp).toLowerCase(),
             }, function (err, response) {
                 if (err) {
-                    sleep(200);
-                    var event = {
-                        'summary': res[i].groupes.map(g => g.NomGroupe).join(' + '),
-                        'location': res[i].ville,
-                        'description': res[i].groupes.map(g => g.NomGroupe).join(' + '),
-                        'start': {
-                            'dateTime': new Date(res[i].datetimestamp * 1000),
-                            'timeZone': 'Europe/Paris',
-                        },
-                        'end': {
-                            'dateTime': new Date(res[i].datetimestamp * 1000).addHours(3),
-                            'timeZone': 'Europe/Paris',
-                        },
-                        'recurrence': [
-                        ],
-                        'attendees': [
-                        ],
-                        'reminders': {
-                            'useDefault': false,
-                            'overrides': [
+                    client.post('/func/funcGetEvent.php', { id: res[i].id }, async function (err, res, body) {
+                        var result = body.results.collection1[0]
+                        var eventId = sha1(result.groupes.map(g => g.NomGroupe).join(' + ') + result.ville + ' ' + result.datetimestamp).toLowerCase()
+                        var event = {
+                            'summary': result.groupes.map(g => g.NomGroupe).join(' + '),
+                            'description': result.groupes.map(g => g.NomGroupe).join(' + '),
+                            'start': {
+                                'dateTime': new Date(result.datetimestamp * 1000),
+                                'timeZone': 'Europe/Paris',
+                            },
+                            'end': {
+                                'dateTime': new Date(result.datetimestamp * 1000).addHours(3),
+                                'timeZone': 'Europe/Paris',
+                            },
+                            'recurrence': [
                             ],
-                        },
-                        'id': sha1(res[i].groupes.map(g => g.NomGroupe).join(' + ') + res[i].ville + ' ' + res[i].datetimestamp).toLowerCase(),
-                    };
-
-                    calendar.events.insert({
-                        auth: auth,
-                        calendarId: 'mbc5o4dl4p8uvt8rgl6v9u3ld0@group.calendar.google.com',
-                        resource: event,
-                    }, function (err, response) {
-                        if (err) {
-                            console.log('The API returned an error: ' + err);
-                            return;
-                        }
-                        console.log('Event created: %s', response.data.summary);
-                    });
+                            'attendees': [
+                            ],
+                            'reminders': {
+                                'useDefault': false,
+                                'overrides': [
+                                ],
+                            },
+                            'location': result.salle + ' - ' + result.ville,
+                            'id': eventId,
+                        };
+                        calendar.events.insert({
+                            auth: auth,
+                            calendarId: 'mbc5o4dl4p8uvt8rgl6v9u3ld0@group.calendar.google.com',
+                            eventId: eventId,
+                            resource: event,
+                        }, function (err, response) {
+                            if (err) {
+                                console.log('The API returned an error: ' + err);
+                                return;
+                            }
+                            console.log('Event created: %s', response.data.summary);
+                        });
+                    })
                 }
             });
         }
