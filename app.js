@@ -21,7 +21,7 @@ fs.readFile('client_secret.json', function processClientSecrets(err, content) {
     // Authorize a client with the loaded credentials, then call the
     // Google Calendar API.
     authorize(JSON.parse(content), insertEvents);
-    authorize(JSON.parse(content), updateEventsLocation);
+    // authorize(JSON.parse(content), updateEventsLocation);
 });
 
 /**
@@ -122,33 +122,33 @@ async function insertEvents(auth) {
                 calendarId: 'mbc5o4dl4p8uvt8rgl6v9u3ld0@group.calendar.google.com',
                 eventId: sha1(res[i].groupes.map(g => g.NomGroupe).join(' + ') + res[i].ville + ' ' + res[i].datetimestamp).toLowerCase(),
             }, function (err, response) {
-                if (err) {
-                    client.post('/func/funcGetEvent.php', { id: res[i].id }, async function (err, res, body) {
-                        var result = body.results.collection1[0]
-                        var eventId = sha1(result.groupes.map(g => g.NomGroupe).join(' + ') + result.ville + ' ' + result.datetimestamp).toLowerCase()
-                        var event = {
-                            'summary': result.groupes.map(g => g.NomGroupe).join(' + '),
-                            'description': result.groupes.map(g => g.NomGroupe).join(' + '),
-                            'start': {
-                                'dateTime': new Date(result.datetimestamp * 1000),
-                                'timeZone': 'Europe/Paris',
-                            },
-                            'end': {
-                                'dateTime': new Date(result.datetimestamp * 1000).addHours(3),
-                                'timeZone': 'Europe/Paris',
-                            },
-                            'recurrence': [
+                client.post('/func/funcGetEvent.php', { id: res[i].id }, async function (err, res, body) {
+                    var result = body.results.collection1[0]
+                    var eventId = sha1(result.groupes.map(g => g.NomGroupe).join(' + ') + result.ville + ' ' + result.datetimestamp).toLowerCase()
+                    var event = {
+                        'summary': result.groupes.map(g => g.NomGroupe).join(' + '),
+                        'description': result.groupes.map(g => g.NomGroupe).join(' + '),
+                        'start': {
+                            'dateTime': new Date(result.datetimestamp * 1000),
+                            'timeZone': 'Europe/Paris',
+                        },
+                        'end': {
+                            'dateTime': new Date(result.datetimestamp * 1000).addHours(3),
+                            'timeZone': 'Europe/Paris',
+                        },
+                        'recurrence': [
+                        ],
+                        'attendees': [
+                        ],
+                        'reminders': {
+                            'useDefault': false,
+                            'overrides': [
                             ],
-                            'attendees': [
-                            ],
-                            'reminders': {
-                                'useDefault': false,
-                                'overrides': [
-                                ],
-                            },
-                            'location': result.salle + ' - ' + result.ville,
-                            'id': eventId,
-                        };
+                        },
+                        'location': result.salle + ', ' + result.adresse + ', ' + result.ville,
+                        'id': eventId,
+                    };
+                    if (err) {
                         calendar.events.insert({
                             auth: auth,
                             calendarId: 'mbc5o4dl4p8uvt8rgl6v9u3ld0@group.calendar.google.com',
@@ -161,8 +161,22 @@ async function insertEvents(auth) {
                             }
                             console.log('Event created: %s', response.data.summary);
                         });
-                    })
-                }
+                    }
+                    else {
+                        calendar.events.update({
+                            auth: auth,
+                            calendarId: 'mbc5o4dl4p8uvt8rgl6v9u3ld0@group.calendar.google.com',
+                            eventId: eventId,
+                            resource: event,
+                        }, function (err, response) {
+                            if (err) {
+                                console.log('The API returned an error: ' + err);
+                                return;
+                            }
+                            console.log('Event updated: %s', response.data.summary);
+                        });
+                    }
+                })
             });
         }
     });
