@@ -122,7 +122,7 @@ async function insertEvents(auth) {
                 calendarId: 'mbc5o4dl4p8uvt8rgl6v9u3ld0@group.calendar.google.com',
                 eventId: sha1(res[i].groupes.map(g => g.NomGroupe).join(' + ') + res[i].ville + ' ' + res[i].datetimestamp).toLowerCase(),
             }, function (err, response) {
-                client.post('/func/funcGetEvent.php', { id: res[i].id }, async function (err, res, body) {
+                client.post('/func/funcGetEvent.php', { id: res[i].id }, async function (error, res, body) {
                     var result = body.results.collection1[0]
                     var eventId = sha1(result.groupes.map(g => g.NomGroupe).join(' + ') + result.ville + ' ' + result.datetimestamp).toLowerCase()
                     var event = {
@@ -162,20 +162,22 @@ async function insertEvents(auth) {
                             console.log('Event created: %s', response.data.summary);
                         });
                     }
-                    else {
-                        calendar.events.update({
-                            auth: auth,
-                            calendarId: 'mbc5o4dl4p8uvt8rgl6v9u3ld0@group.calendar.google.com',
-                            eventId: eventId,
-                            resource: event,
-                        }, function (err, response) {
-                            if (err) {
-                                console.log('The API returned an error: ' + err);
-                                return;
-                            }
-                            console.log('Event updated: %s', response.data.summary);
-                        });
-                    }
+                    else
+                        console.log("Event already in the calendar : %s", result.groupes.map(g => g.NomGroupe).join(' + '))
+                    // else {
+                    //     calendar.events.update({
+                    //         auth: auth,
+                    //         calendarId: 'mbc5o4dl4p8uvt8rgl6v9u3ld0@group.calendar.google.com',
+                    //         eventId: eventId,
+                    //         resource: event,
+                    //     }, function (err, response) {
+                    //         if (err) {
+                    //             console.log('The API returned an error: ' + err);
+                    //             return;
+                    //         }
+                    //         console.log('Event updated: %s', response.data.summary);
+                    //     });
+                    // }
                 })
             });
         }
